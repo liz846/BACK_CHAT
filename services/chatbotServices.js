@@ -1,5 +1,6 @@
 const Catalog = require('../model/catalogModel');
 const Company = require('../model/companyModel');
+
 const normalize = (text = '') =>
   text
     .toLowerCase()
@@ -47,7 +48,6 @@ class ChatbotService {
       const wantsLineaPre = q.includes('premium');
       const wantsAroma = q.includes('aroma');
       const wantsRecomUses = q.includes('recomendaciones');
-
 
       const wantsMission = q.includes('mision');
       const wantsVision = q.includes('vision');
@@ -116,6 +116,30 @@ class ChatbotService {
         return catalogs.map(c => c.categoryName).join(', ');
       }
 
+      for (const category of catalogs) {
+        const categoryName = normalize(category.categoryName);
+
+        if (
+          q.includes(categoryName) &&
+          (
+            q.includes('productos') ||
+            q.includes('que hay') ||
+            q.includes('qué hay') ||
+            q.includes('lista') ||
+            q.includes('ver')
+          )
+        ) {
+          if (!category.products || category.products.length === 0) {
+            return `La categoría ${category.categoryName} no tiene productos registrados.`;
+          }
+
+          const productList = category.products
+            .map(p => p.name || p.nameSeg)
+            .join(', ');
+
+          return `${category.categoryName}: ${productList}`;
+        }
+      }
 
       let exactMatch = null;
       let bestMatch = null;
@@ -215,19 +239,6 @@ class ChatbotService {
         }
 
         return `Producto: ${product.name || product.nameSeg}`;
-      }
-
-      if (wantsFullInfo) {
-        for (const category of catalogs) {
-          const categoryName = normalize(category.categoryName);
-          if (q.includes(categoryName)) {
-            let response = `Categoría: ${category.categoryName}`;
-            category.products.forEach(p => {
-              response += ` | ${p.name || p.nameSeg}`;
-            });
-            return response;
-          }
-        }
       }
 
       return 'No tengo una respuesta para esa pregunta. Por favor contáctanos directamente al correo sistemaweb71@gmail.com para más información.';
